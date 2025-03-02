@@ -41,13 +41,18 @@ class _MyHomePageState extends State<MyHomePage> {
       _errorMessage = null;
     });
 
-    final url = Uri.parse('http://localhost:5000/count');
+    // Default port is 5000, but on macOS this may conflict with AirPlay Receiver
+    // If you encounter connection issues, change this to 5001 or 5002
+    final url = Uri.parse('http://127.0.0.1:5000/count');
     try {
+      print('Attempting to connect to: ${url.toString()}');
       final response = await http.post(
         url,
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'input': _controller.text}),
       );
+      print('Response status code: ${response.statusCode}');
+      print('Response body: ${response.body}');
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -61,7 +66,8 @@ class _MyHomePageState extends State<MyHomePage> {
       }
     } catch (e) {
       setState(() {
-        _errorMessage = 'Error: $e';
+        _errorMessage = 'Connection error: ${e.toString()}';
+        print('Detailed error: $e');
       });
     } finally {
       setState(() {
@@ -99,7 +105,16 @@ class _MyHomePageState extends State<MyHomePage> {
               Text('Character count: $_charCount',
                   style: Theme.of(context).textTheme.headlineMedium),
             if (_errorMessage != null)
-              Text(_errorMessage!, style: const TextStyle(color: Colors.red)),
+              Column(
+                children: [
+                  Text(_errorMessage!, style: const TextStyle(color: Colors.red)),
+                  const SizedBox(height: 8),
+                  ElevatedButton(
+                    onPressed: _sendInput,
+                    child: const Text('Retry'),
+                  ),
+                ],
+              ),
           ],
         ),
       ),
